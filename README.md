@@ -2,6 +2,19 @@
 
 Custom TTS node that clones voice from a reference audio and speaks entered text.
 
+## Install Models
+
+```text
+--  ComfyUI/models/tts/chatterbox/
+    |-- conds.pt
+    |-- s3gen.safetensors
+    |-- t3_cfg.safetensors
+    |-- tokenizer.json
+    |-- ve.safetensors
+```
+
+All required files above can be downloaded from [https://huggingface.co/ResembleAI/chatterbox/tree/main](https://huggingface.co/ResembleAI/chatterbox/tree/main)
+
 ## Settings
 
 | Setting                    | Description                                                                                                                                                                                                                                                                                       |
