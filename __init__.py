@@ -1,6 +1,4 @@
-import os
 from random import random
-from .chatterbox.tts import ChatterboxTTS
 import importlib
 import subprocess
 import sys
@@ -11,7 +9,7 @@ from pathlib import Path
 
 
 # Auto-install missing dependencies
-required_packages = ["conformer"]
+required_packages = ["librosa", "conformer", "perth", "resemble-perth"]
 for package in required_packages:
     pkg_name = package.split(">=")[0]
     try:
@@ -20,6 +18,9 @@ for package in required_packages:
         print(f"[VoiceCloneNode] Installing missing package: {package}")
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", package])
+        
+# --- Now safe to import ---        
+from .chatterbox.tts import ChatterboxTTS
 
 # Automatically detect the best available device
 if torch.cuda.is_available():
