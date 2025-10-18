@@ -1,1 +1,19 @@
-# ComfyUI-Voice-Clone
+# ComfyUI Voice Clone
+
+Custom TTS node that clones voice from a reference audio and speaks entered text.
+
+## Settings
+
+| Setting                    | Description                                                                                                                                                                                                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| exaggeration               | Controls the expressiveness / prosody of the generated voice. Higher values make the speech more emphatic and varied; lower values produce a flatter, more neutral delivery. Valid range: 0.25 - 2.0.                                                                                             |
+| temperature                | Sampling temperature for the text-to-speech decoder. Higher values increase randomness and variety in the generated audio; lower values make outputs more conservative and deterministic. Valid range: 0.05 - 5.0.                                                                                |
+| cfg_weight                 | Classifier-free guidance (CFG) weight that balances adherence to the text conditioning vs. model priors. Larger values force the model to follow the conditioning (text/prompt) more strongly, which can improve faithfulness but may increase artifacts if set too high. Valid range: 0.05 - 1.0 |
+| min_p                      | A lower-probability cutoff used during sampling to filter extremely unlikely tokens or frames. Helps avoid very low-probability outputs that could degrade quality. Valid range: 0.0 - 1.0                                                                                                        |
+| top_p                      | Nucleus (top-p) sampling cumulative probability threshold. The decoder samples from the smallest set of tokens whose cumulative probability ≥ top_p. top_p = 1.0 disables nucleus filtering (i.e., sample from full distribution). Valid range: 0.0 - 1.0                                         |
+| repetition_penalty         | Penalizes repetition during generation. Values > 1.0 discourage repeating the same tokens/frames, reducing looping/redundancy in speech. Valid range: 1.0 - 2.0                                                                                                                                   |
+| voice_embedding (optional) | If provided, an audio reference is used as an audio prompt for voice cloning.                                                                                                                                                                                                                     |
+
+## About
+
+This custom node uses [resemble-ai/chatterbox](https://github.com/resemble-ai/chatterbox) under the hood.
