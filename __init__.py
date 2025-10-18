@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 # Auto-install missing dependencies
-required_packages = ["librosa", "conformer", "perth", "resemble-perth"]
+required_packages = ["librosa>=0.11.0", "conformer>=0.1.0", "perth>=1.0.0", "resemble-perth>=1.0.1"]
 for package in required_packages:
     pkg_name = package.split(">=")[0]
     try:
