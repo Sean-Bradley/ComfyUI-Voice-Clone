@@ -95,64 +95,67 @@ class VoiceCloneNode:
     FUNCTION = "generate"
     CATEGORY = "SBCODE"
 
-    def generate(self, text, exaggeration, temperature, cfg_weight, min_p, top_p, repetition_penalty, voice_embedding=None):
+    def generate(
+        self,
+        text,
+        exaggeration,
+        temperature,
+        cfg_weight,
+        min_p,
+        top_p,
+        repetition_penalty,
+        voice_embedding=None
+    ):
         model = ChatterboxTTS.from_local(
-            "ComfyUI/models/tts/chatterbox", device=device)
+            "ComfyUI/models/tts/chatterbox", device=device
+        )
 
         model_sample_rate = 24000
 
-        if voice_embedding is not None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_path = Path(tmpdir) / "voice_prompt.wav"
 
-            waveform = voice_embedding["waveform"]
-            if waveform.ndim == 3:
-                waveform = waveform.squeeze(0)
-            elif waveform.ndim == 1:
-                waveform = waveform.unsqueeze(0)
+            if voice_embedding is not None:
+                waveform = voice_embedding["waveform"]
+                if waveform.ndim == 3:
+                    waveform = waveform.squeeze(0)
+                elif waveform.ndim == 1:
+                    waveform = waveform.unsqueeze(0)
 
-            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
-                temp_path = tmp.name
+                if voice_embedding["sample_rate"] != model_sample_rate:
+                    waveform = torchaudio.functional.resample(
+                        waveform, voice_embedding["sample_rate"], model_sample_rate
+                    )
 
-            if voice_embedding["sample_rate"] != model_sample_rate:
-                waveform = torchaudio.functional.resample(
-                    waveform, voice_embedding["sample_rate"], model_sample_rate
+                torchaudio.save(str(temp_path), waveform, model_sample_rate)
+                print(f"Temporary voice file saved to: {temp_path}")
+
+                wav = model.generate(
+                    text=text,
+                    audio_prompt_path=str(temp_path),
+                    exaggeration=exaggeration,
+                    temperature=temperature,
+                    cfg_weight=cfg_weight,
+                    min_p=min_p,
+                    top_p=top_p,
+                    repetition_penalty=repetition_penalty,
                 )
 
-            torchaudio.save(temp_path, waveform, model_sample_rate)
-            print(f"Temporary audio file created at: {temp_path}")
-
-            wav = model.generate(
-                text=text,
-                audio_prompt_path=temp_path,
-                exaggeration=exaggeration,
-                temperature=temperature,
-                cfg_weight=cfg_weight,
-                min_p=min_p,
-                top_p=top_p,
-                repetition_penalty=repetition_penalty,
-            )
-
-            # Cleanup
-            try:
-                os.remove(temp_path)
-                print(f"Deleted temporary file: {temp_path}")
-            except Exception as e:
-                print(f"Warning: Could not delete temp file {temp_path}: {e}")
-
-        else:
-            wav = model.generate(
-                text=text,
-                exaggeration=exaggeration,
-                temperature=temperature,
-                cfg_weight=cfg_weight,
-                min_p=min_p,
-                top_p=top_p,
-                repetition_penalty=repetition_penalty,
-            )
+            else:
+                wav = model.generate(
+                    text=text,
+                    exaggeration=exaggeration,
+                    temperature=temperature,
+                    cfg_weight=cfg_weight,
+                    min_p=min_p,
+                    top_p=top_p,
+                    repetition_penalty=repetition_penalty,
+                )
 
         return ({
-                "waveform": wav.unsqueeze(0),
-                "sample_rate": model_sample_rate
-                },)
+            "waveform": wav.unsqueeze(0),
+            "sample_rate": model_sample_rate
+        },)
 
 
 NODE_CLASS_MAPPINGS = {"VoiceCloneNode": VoiceCloneNode}
