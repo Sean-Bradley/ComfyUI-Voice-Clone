@@ -4,7 +4,11 @@ Custom TTS node that clones voice from a reference audio and speaks entered text
 
 ## Install Voice Clone Custom Node
 
-Install the custom node ComfyUI Voice Clone using your command/terminal prompt.
+Install the ComfyUI Voice Clone custom node using the manager,
+
+![](./docs/voice-clone-manager.png)
+
+Or, install using your command/terminal prompt.
 
 1. Navigate to your `ComfyUI/custom_nodes` folder.
 2. Run,
