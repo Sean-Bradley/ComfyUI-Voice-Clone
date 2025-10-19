@@ -30,7 +30,7 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-DEFAULT_TEXT = """Hello, and welcome to my course teaching how to generate video and images using Comfy UI. 
+DEFAULT_TEXT = """Hello. and welcome to my course teaching how to generate video and images using Comfy UI. 
 This hands-on guide will help you to create stunning visuals and animations using Comfy UI's powerful node-based workflow. 
 Whether you're a digital artist, content creator, creative developer, or AI enthusiast, 
 this course will show you how to turn your ideas into stunning visuals with no coding required."""
@@ -51,19 +51,19 @@ class VoiceCloneNode:
             "required": {
                 "text": ("STRING", {"multiline": True, "default": DEFAULT_TEXT}),
                 "exaggeration": ("FLOAT", {
-                    "default": 0.4,
+                    "default": 0.5,
                     "min": 0.25,
                     "max": 2.0,
                     "step": 0.05
                 }),
                 "temperature": ("FLOAT", {
-                    "default": 0.6,
-                    "min": 0.05,
-                    "max": 5.0,
+                    "default": 0.8,
+                    "min": 0.15,
+                    "max": 2.0,
                     "step": 0.05
                 }),
                 "cfg_weight": ("FLOAT", {
-                    "default": 0.3,
+                    "default": 0.5,
                     "min": 0.05,
                     "max": 1.0,
                     "step": 0.05
@@ -75,7 +75,7 @@ class VoiceCloneNode:
                     "step": 0.01
                 }),
                 "top_p": ("FLOAT", {
-                    "default": 1.0,
+                    "default": .95,
                     "min": 0.0,
                     "max": 1.0,
                     "step": 0.01
