@@ -6,7 +6,7 @@ Custom TTS node that clones voice from a reference audio and speaks entered text
 
 Install the custom node ComfyUI Voice Clone using your command/terminal prompt.
 
-1. Navigate to your ComfyUI/custom_nodes folder.
+1. Navigate to your `ComfyUI/custom_nodes` folder.
 2. Run,
    ```bash
    git clone https://github.com/Sean-Bradley/ComfyUI-Virtual-Webcam.git
@@ -28,9 +28,11 @@ Ensure that your folder structure and downloaded files resemble this below.
     |-- ve.safetensors
 ```
 
-## Sample Workflow
+## Sample Workflows
 
-![ ](./docs/voice-clone-1.jpg)
+![So_Much_for_So_Little](./docs/voice-clone-1.jpg)
+
+![Puss_n%27_Booty](./docs/voice-clone-2.png)
 
 ## Sample Audios
 

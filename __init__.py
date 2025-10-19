@@ -1,3 +1,4 @@
+from .chatterbox.tts import ChatterboxTTS
 from random import random
 import importlib
 import subprocess
@@ -9,7 +10,8 @@ from pathlib import Path
 
 
 # Auto-install missing dependencies
-required_packages = ["librosa>=0.11.0", "conformer>=0.1.0", "perth>=1.0.0", "resemble-perth>=1.0.1"]
+required_packages = ["librosa>=0.11.0", "conformer>=0.1.0",
+                     "perth>=1.0.0", "resemble-perth>=1.0.1"]
 for package in required_packages:
     pkg_name = package.split(">=")[0]
     try:
@@ -18,9 +20,8 @@ for package in required_packages:
         print(f"[VoiceCloneNode] Installing missing package: {package}")
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", package])
-        
-# --- Now safe to import ---        
-from .chatterbox.tts import ChatterboxTTS
+
+# --- Now safe to import ---
 
 # Automatically detect the best available device
 if torch.cuda.is_available():
@@ -30,10 +31,7 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-DEFAULT_TEXT = """Hello. and welcome to my course teaching how to generate video and images using Comfy UI. 
-This hands-on guide will help you to create stunning visuals and animations using Comfy UI's powerful node-based workflow. 
-Whether you're a digital artist, content creator, creative developer, or AI enthusiast, 
-this course will show you how to turn your ideas into stunning visuals with no coding required."""
+DEFAULT_TEXT = "Hello. and welcome to my course teaching how to generate video and images using Comfy UI. This hands-on guide will help you to create stunning visuals and animations using Comfy UI's powerful node-based workflow. Whether you're a digital artist, content creator, creative developer, or AI enthusiast, this course will show you how to turn your ideas into stunning visuals with no coding required."
 
 
 class VoiceCloneNode:
@@ -51,7 +49,7 @@ class VoiceCloneNode:
             "required": {
                 "text": ("STRING", {"multiline": True, "default": DEFAULT_TEXT}),
                 "exaggeration": ("FLOAT", {
-                    "default": 0.5,
+                    "default": 0.4,
                     "min": 0.25,
                     "max": 2.0,
                     "step": 0.05
@@ -63,7 +61,7 @@ class VoiceCloneNode:
                     "step": 0.05
                 }),
                 "cfg_weight": ("FLOAT", {
-                    "default": 0.5,
+                    "default": 0.7,
                     "min": 0.05,
                     "max": 1.0,
                     "step": 0.05
@@ -75,7 +73,7 @@ class VoiceCloneNode:
                     "step": 0.01
                 }),
                 "top_p": ("FLOAT", {
-                    "default": .95,
+                    "default": 1.0,
                     "min": 0.0,
                     "max": 1.0,
                     "step": 0.01
