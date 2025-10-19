@@ -13,7 +13,7 @@ Or, install using your command/terminal prompt.
 1. Navigate to your `ComfyUI/custom_nodes` folder.
 2. Run,
    ```bash
-   git clone https://github.com/Sean-Bradley/ComfyUI-Virtual-Webcam.git
+   git clone https://github.com/Sean-Bradley/ComfyUI-Voice-Clone.git
    ```
 3. Restart ComfyUI
 
