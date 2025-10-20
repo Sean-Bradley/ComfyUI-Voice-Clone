@@ -40,11 +40,13 @@ Ensure that your folder structure and downloaded files resemble this below.
 
 ## Sample Audios
 
-| Download                                                       | Description                                                                                                                                                         |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ![So_Much_for_So_Little.mp3](docs/So_Much_for_So_Little.mp3)   | Audio snippets assembled from [So Much for So Little](https://en.wikipedia.org/wiki/So_Much_for_So_Little) animated cartoon. Copyright © 1949 Warner Bros. Cartoons |
-| ![puss-n-booty-lady.mp3](docs/puss-n-booty-lady.mp3)           | Audio snippets assembled from [Puss n' Booty](https://en.wikipedia.org/wiki/Puss_n%27_Booty) animated cartoon. Copyright © 1943 Warner Bros. Cartoons               |
-| ![scrap-happy-daffy-duck.mp3](docs/scrap-happy-daffy-duck.mp3) | Audio snippets assembled from [Scrap Happy Daffy](https://en.wikipedia.org/wiki/Scrap_Happy_Daffy) animated cartoon. Copyright © 1949 Warner Bros. Cartoons         |
+| Download                                                                                | Description                                                                                                                                                         |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ![So_Much_for_So_Little.mp3](docs/So_Much_for_So_Little.mp3)                            | Audio snippets assembled from [So Much for So Little](https://en.wikipedia.org/wiki/So_Much_for_So_Little) animated cartoon. Copyright © 1949 Warner Bros. Cartoons |
+| ![puss-n-booty-lady.mp3](docs/puss-n-booty-lady.mp3)                                    | Audio snippets assembled from [Puss n' Booty](https://en.wikipedia.org/wiki/Puss_n%27_Booty) animated cartoon. Copyright © 1943 Warner Bros. Cartoons               |
+| ![scrap-happy-daffy-duck.mp3](docs/scrap-happy-daffy-duck.mp3)                          | Audio snippets assembled from [Scrap Happy Daffy](https://en.wikipedia.org/wiki/Scrap_Happy_Daffy) animated cartoon. Copyright © 1949 Warner Bros. Cartoons         |
+| ![Night of the Living Dead 1968 (man)](./wav/Night-of-the-Living-Dead-1968-man.mp3)     | Audio snippets assembled from [Night of the Living Dead (1968)](<https://en.wikipedia.org/wiki/File:Night_of_the_Living_Dead_(1968).webm>)                          |
+| ![Night of the Living Dead 1968 (woman)](./wav/Night-of-the-Living-Dead-1968-woman.mp3) | Audio snippets assembled from [Night of the Living Dead (1968)](<https://en.wikipedia.org/wiki/File:Night_of_the_Living_Dead_(1968).webm>)                          |
 
 ## Settings
 
