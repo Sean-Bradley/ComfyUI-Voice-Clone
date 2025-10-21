@@ -127,6 +127,8 @@ class VoiceCloneNode:
                     )
 
                 torchaudio.save(str(temp_path), waveform, model_sample_rate)
+                # torchaudio.save_with_torchcodec(
+                #     str(temp_path), waveform, model_sample_rate)
                 print(f"Temporary voice file saved to: {temp_path}")
 
                 wav = model.generate(
