@@ -1,4 +1,3 @@
-from .chatterbox.tts import ChatterboxTTS
 from random import random
 import importlib
 import subprocess
@@ -22,6 +21,8 @@ for package in required_packages:
             [sys.executable, "-m", "pip", "install", package])
 
 # --- Now safe to import ---
+from .chatterbox.tts import ChatterboxTTS
+import perth
 
 # Automatically detect the best available device
 if torch.cuda.is_available():
@@ -32,6 +33,13 @@ else:
     device = "cpu"
 
 DEFAULT_TEXT = "Hello. and welcome to my course teaching how to generate video and images using Comfy UI. This hands-on guide will help you to create stunning visuals and animations using Comfy UI's powerful node-based workflow. Whether you're a digital artist, content creator, creative developer, or AI enthusiast, this course will show you how to turn your ideas into stunning visuals with no coding required."
+
+
+class NullWatermarker:
+    def apply_watermark(self, signal, sample_rate):
+        print(
+            "Using NullWatermarker: no watermark applied. sample_rate=" + str(sample_rate))
+        return signal
 
 
 class VoiceCloneNode:
@@ -84,6 +92,9 @@ class VoiceCloneNode:
                     "max": 2.0,
                     "step": 0.1
                 }),
+                "disable_watermark": ("BOOLEAN", {
+                    "default": False
+                }),
             },
             "optional": {
                 "voice_embedding": ("AUDIO",),
@@ -103,6 +114,7 @@ class VoiceCloneNode:
         min_p,
         top_p,
         repetition_penalty,
+        disable_watermark=False,
         voice_embedding=None
     ):
         model = ChatterboxTTS.from_local(
@@ -110,6 +122,8 @@ class VoiceCloneNode:
         )
 
         model_sample_rate = 24000
+        if disable_watermark:
+            model.watermarker = NullWatermarker()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_path = Path(tmpdir) / "voice_prompt.wav"
@@ -159,7 +173,58 @@ class VoiceCloneNode:
         },)
 
 
-NODE_CLASS_MAPPINGS = {"VoiceCloneNode": VoiceCloneNode}
+class DetectWatermarkNode:
+    """Detects a Perth watermark in an AUDIO input and returns True/False."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {"audio": ("AUDIO",)}}
+
+    RETURN_TYPES = ("BOOLEAN",)
+    FUNCTION = "detect"
+    CATEGORY = "SBCODE"
+
+    def detect(self, audio=None):
+        try:
+            if audio is None:
+                print("[DetectWatermarkNode] No audio input provided")
+                return (False,)
+
+            waveform = audio.get("waveform")
+            sr = audio.get("sample_rate")
+            if waveform is None or sr is None:
+                print("[DetectWatermarkNode] Invalid audio structure")
+                return (False,)
+
+            # Convert waveform tensor to mono numpy array
+            import torch
+            import numpy as _np
+
+            if isinstance(waveform, torch.Tensor):
+                arr = waveform.squeeze(0).cpu().numpy()
+            else:
+                arr = _np.asarray(waveform)
+
+            if arr.ndim > 1:
+                arr = arr.mean(axis=0)
+
+            # Use PerthImplicitWatermarker to extract watermark
+            watermarker = perth.PerthImplicitWatermarker()
+            watermark = watermarker.get_watermark(arr, sample_rate=sr)
+            detected = bool(watermark == 1.0 or watermark > 0.5)
+            print(
+                f"[DetectWatermarkNode] Extracted watermark: {watermark} -> detected={detected}")
+            return (detected,)
+        except Exception as e:
+            print(f"[DetectWatermarkNode] Error detecting watermark: {e}")
+            return (False,)
+
+
+NODE_CLASS_MAPPINGS = {"VoiceCloneNode": VoiceCloneNode,
+                       "DetectWatermarkNode": DetectWatermarkNode
+                       }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "VoiceCloneNode": "Voice Clone"}
+    "VoiceCloneNode": "Voice Clone",
+    "DetectWatermarkNode": "Detect Watermark"
+}
