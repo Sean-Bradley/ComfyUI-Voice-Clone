@@ -23,6 +23,7 @@ for package in required_packages:
 
 # --- Now safe to import ---
 from .chatterbox.tts import ChatterboxTTS
+from .chatterbox.vc import ChatterboxVC
 import perth
 
 # Automatically detect the best available device
@@ -247,7 +248,103 @@ class VoiceCloneNode:
             return ({"waveform": final_wav.unsqueeze(0), "sample_rate": model_sample_rate},)
         except Exception as e:
             print(f"[VoiceCloneNode] Generation error: {e}")
-            return ({"waveform": torch.zeros(1, 1), "sample_rate": model_sample_rate},)
+            return ({"waveform": torch.zeros(1), "sample_rate": model_sample_rate},)
+
+
+class VoiceReplaceNode:
+
+    """Custom node that replaces a voice with a reference voice."""
+
+    def __init__(self):
+        super().__init__()
+        self.model = None
+        self.model_path = Path("ComfyUI/models/tts/chatterbox")
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "audio": ("AUDIO",),
+                "target_voice": ("AUDIO",),
+                "disable_watermark": ("BOOLEAN", {
+                    "default": False
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("AUDIO",)
+    FUNCTION = "generate"
+    CATEGORY = "SBCODE"
+
+    def generate(
+        self,
+        audio,       
+        target_voice,
+        disable_watermark=False,
+    ):
+        # lazy-load model once per node instance
+        if getattr(self, "model", None) is None:
+            self.model = ChatterboxVC.from_local(str(self.model_path), device=device)
+
+        model = self.model
+        model_sample_rate = 24000
+        if disable_watermark:
+            model.watermarker = NullWatermarker()
+       
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                audio_path = Path(tmpdir) / "audio.wav"    
+                target_voice_path = Path(tmpdir) / "target_voice.wav"    
+      
+                audio_waveform = audio["waveform"]
+                target_voice_waveform = target_voice["waveform"]
+                
+                if isinstance(audio_waveform, torch.Tensor):
+                    aw = audio_waveform
+                else:
+                    aw = torch.tensor(audio_waveform)
+                    
+                if isinstance(target_voice_waveform, torch.Tensor):
+                    taw = target_voice_waveform
+                else:
+                    taw = torch.tensor(target_voice_waveform)
+
+                # Normalize dims to (channels, time)
+                if aw.ndim == 3:
+                    aw = aw.squeeze(0)
+                if aw.ndim == 1:
+                    aw = aw.unsqueeze(0)
+                
+                if taw.ndim == 3:
+                    taw = taw.squeeze(0)
+                if taw.ndim == 1:
+                    taw = taw.unsqueeze(0)
+
+                if audio["sample_rate"] != model_sample_rate:
+                    aw = torchaudio.functional.resample(
+                        aw, audio["sample_rate"], model_sample_rate
+                    )
+                
+                if target_voice["sample_rate"] != model_sample_rate:
+                    taw = torchaudio.functional.resample(
+                        taw, audio["sample_rate"], model_sample_rate
+                    )
+
+                torchaudio.save(str(audio_path), aw, model_sample_rate)
+                print(f"Temporary audio file saved to: {audio_path}")
+                
+                torchaudio.save(str(target_voice_path), taw, model_sample_rate)
+                print(f"Temporary target voice file saved to: {target_voice_path}")           
+                  
+                out_wav = model.generate(
+                    audio=str(audio_path),
+                    target_voice_path=str(target_voice_path),
+                )               
+
+            return ({"waveform": out_wav.unsqueeze(0), "sample_rate": model_sample_rate},)
+        except Exception as e:
+            print(f"[VoiceReplaceNode] Generation error: {e}")
+            return ({"waveform": torch.zeros(1), "sample_rate": model_sample_rate},)
 
 
 class DetectWatermarkNode:
@@ -298,10 +395,12 @@ class DetectWatermarkNode:
 
 
 NODE_CLASS_MAPPINGS = {"VoiceCloneNode": VoiceCloneNode,
+                       "VoiceReplaceNode": VoiceReplaceNode,
                        "DetectWatermarkNode": DetectWatermarkNode
                        }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "VoiceCloneNode": "Voice Clone",
+    "VoiceReplaceNode": "Voice Replace",
     "DetectWatermarkNode": "Detect Watermark"
 }
