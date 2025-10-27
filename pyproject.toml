@@ -1,13 +1,16 @@
 [project]
-name = "ComfyUI Voice Clone"
+name = "comfyui-voice-clone"
 description = "Custom TTS node that clones voice from a reference audio and speaks entered text."
 version = "1.0.0"
 license = "Apache License, Version 2.0"
 
 [project.urls]
 Repository = "https://github.com/Sean-Bradley/ComfyUI-Voice-Clone"
+#  Used by Comfy Registry https://registry.comfy.org
+Documentation = "https://github.com/Sean-Bradley/ComfyUI-Voice-Clone/wiki"
+"Bug Tracker" = "https://github.com/Sean-Bradley/ComfyUI-Voice-Clone/issues"
 
 [tool.comfy]
-PublisherId = "Sean-Bradley"
+PublisherId = "sbcode"
 DisplayName = "ComfyUI Voice Clone"
 Icon = ""
