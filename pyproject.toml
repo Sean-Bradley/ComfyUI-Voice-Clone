@@ -14,4 +14,4 @@ Documentation = "https://github.com/Sean-Bradley/ComfyUI-Voice-Clone/wiki"
 [tool.comfy]
 PublisherId = "sbcode"
 DisplayName = "ComfyUI Voice Clone"
-Icon = ""
+Icon = "https://avatars.githubusercontent.com/u/59069470?s=200&v=4"
