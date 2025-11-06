@@ -152,24 +152,21 @@ class VoiceCloneNode:
         segments = chunk_sentences_by_words(
             sentences, max_words=max_words_per_segment)
 
-        print("debug1")
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 temp_path = Path(tmpdir) / "voice_prompt.wav"
-
-                print("debug2")
 
                 # prepare voice prompt file once if provided
                 if voice_embedding is not None:
                     waveform = voice_embedding["waveform"]
                     # Always ensure we have a tensor first
                     if isinstance(waveform, torch.Tensor):
-                        print("debug3: waveform is tensor, shape=", waveform.shape)
+                        print("waveform is tensor, shape=", waveform.shape)
                         w = waveform.clone()  # Make a copy to avoid modifying the input
                     else:
-                        print("debug4: waveform is not tensor, type=", type(waveform))
+                        print("waveform is not tensor, type=", type(waveform))
                         w = torch.tensor(waveform)
-                        print("debug4.1: converted shape=", w.shape)
+                        print("converted shape=", w.shape)
 
                     # Normalize dims to (channels, samples)
                     print("Initial waveform shape:", w.shape)
@@ -239,7 +236,6 @@ class VoiceCloneNode:
                         print(f"Error saving temporary audio file: {e}")
                         raise
                     print(f"Temporary voice file saved to: {temp_path}")
-                    print("debug8.1")
 
                 out_wavs = []
                 for seg in segments:
@@ -267,42 +263,34 @@ class VoiceCloneNode:
 
                     # Normalize returned waveform to a torch tensor with shape (channels, time)
                     if isinstance(wav_seg, torch.Tensor):
-                        print("debug9")
                         seg_w = wav_seg
                     else:
-                        print("debug10")
                         seg_w = torch.tensor(wav_seg)
-                        print("debug10.1")
 
                     # Handle possible shapes:
                     # - (batch, channels, time) -> take first batch
                     # - (channels, time) -> ok
                     # - (time,) -> convert to (1, time)
                     # - (batch, time) or other -> try to reshape to (1, time)
-                    print("debug11")
                     if seg_w.ndim == 3:
                         seg_w = seg_w[0]
                     elif seg_w.ndim == 1:
                         seg_w = seg_w.unsqueeze(0)
-                        print("debug11.1")
                     elif seg_w.ndim == 2:
                         # assume (channels, time) or (batch, time); if batch-like, keep as-is
                         pass
                     else:
                         seg_w = seg_w.reshape(1, -1)
-                        print("debug11.2")
 
                     out_wavs.append(seg_w)
-                    print("debug12")
 
-                print("debug13")
                 if len(out_wavs) == 0:
                     final_wav = torch.zeros(1, 0)
-                    print("debug13.1: Created empty waveform")
+                    print("Created empty waveform")
                 else:
                     # concatenate along time axis (dim=1) expecting (channels, time)
                     final_wav = torch.cat(out_wavs, dim=1)
-                    print(f"debug13.2: Concatenated waveform shape: {final_wav.shape}")
+                    print(f"Concatenated waveform shape: {final_wav.shape}")
 
                 # final_wav is expected by ComfyUI to have a leading batch dimension
                 # i.e. shape (batch, channels, samples). We'll return batch dimension = 1.
