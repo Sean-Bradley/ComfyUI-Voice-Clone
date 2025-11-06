@@ -3,4 +3,5 @@ conformer>=0.1.0
 perth>=1.0.0
 resemble-perth>=1.0.1
 resampy>=0.4.3
+scipy>=1.10.0
 s3tokenizer>=0.2.0

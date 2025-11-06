@@ -1,27 +1,12 @@
 from random import random
-import importlib
-import subprocess
-import sys
 import torch
-import torchaudio
 import tempfile
+import numpy as _np
+import scipy.io.wavfile as scipy_wavfile
+import scipy.signal as scipy_signal
+from math import gcd
 from pathlib import Path
 import re
-
-
-# Auto-install missing dependencies
-required_packages = ["librosa>=0.11.0", "conformer>=0.1.0",
-                     "perth>=1.0.0", "resemble-perth>=1.0.1", "resampy>=0.4.3"]
-for package in required_packages:
-    pkg_name = package.split(">=")[0]
-    try:
-        importlib.import_module(pkg_name)
-    except ImportError:
-        print(f"[VoiceCloneNode] Installing missing package: {package}")
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", package])
-
-# --- Now safe to import ---
 from .chatterbox.tts import ChatterboxTTS
 from .chatterbox.vc import ChatterboxVC
 import perth
@@ -125,7 +110,8 @@ class VoiceCloneNode:
         """
         # lazy-load model once per node instance
         if getattr(self, "model", None) is None:
-            self.model = ChatterboxTTS.from_local(str(self.model_path), device=device)
+            self.model = ChatterboxTTS.from_local(
+                str(self.model_path), device=device)
 
         model = self.model
         model_sample_rate = 24000
@@ -163,33 +149,97 @@ class VoiceCloneNode:
 
         max_words_per_segment = 20
         sentences = split_into_sentences(text)
-        segments = chunk_sentences_by_words(sentences, max_words=max_words_per_segment)
+        segments = chunk_sentences_by_words(
+            sentences, max_words=max_words_per_segment)
 
+        print("debug1")
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 temp_path = Path(tmpdir) / "voice_prompt.wav"
 
+                print("debug2")
+
                 # prepare voice prompt file once if provided
                 if voice_embedding is not None:
                     waveform = voice_embedding["waveform"]
+                    # Always ensure we have a tensor first
                     if isinstance(waveform, torch.Tensor):
-                        w = waveform
+                        print("debug3: waveform is tensor, shape=", waveform.shape)
+                        w = waveform.clone()  # Make a copy to avoid modifying the input
                     else:
+                        print("debug4: waveform is not tensor, type=", type(waveform))
                         w = torch.tensor(waveform)
+                        print("debug4.1: converted shape=", w.shape)
 
-                    # Normalize dims to (channels, time)
-                    if w.ndim == 3:
-                        w = w.squeeze(0)
-                    if w.ndim == 1:
-                        w = w.unsqueeze(0)
-
+                    # Normalize dims to (channels, samples)
+                    print("Initial waveform shape:", w.shape)
+                    
+                    # Handle all possible shapes to get to (channels, samples)
+                    if w.ndim == 3:  # (batch, channels, samples)
+                        w = w.squeeze(0)  # -> (channels, samples)
+                    elif w.ndim == 1:  # (samples,)
+                        w = w.unsqueeze(0)  # -> (1, samples) mono
+                    
+                    # If we have a 2D tensor, ensure it's (channels, samples) not (samples, channels)
+                    if w.ndim == 2:
+                        if w.shape[0] > w.shape[1]:  # Likely (samples, channels)
+                            w = w.t()  # -> (channels, samples)
+                        
+                    # Ensure proper channel count (1 for mono, 2 for stereo)
+                    if w.shape[0] > 2:
+                        w = w[:2]  # Keep only first two channels if more
+                    
+                    print("Normalized waveform shape:", w.shape)
+                    
+                    # Ensure we have a 2D tensor with shape (channels, time)
+                    if w.ndim != 2:
+                        w = w.view(1, -1)  # Force to (1, time) if shape is unexpected
+                    
                     if voice_embedding["sample_rate"] != model_sample_rate:
-                        w = torchaudio.functional.resample(
-                            w, voice_embedding["sample_rate"], model_sample_rate
-                        )
+                        src_sr = int(voice_embedding["sample_rate"])
+                        tgt_sr = int(model_sample_rate)
+                        print("Resampling from", src_sr, "to", tgt_sr)
+                        # Use resample_poly for better quality. Reduce ratio by gcd.
+                        w_np = w.cpu().numpy()
+                        up = tgt_sr
+                        down = src_sr
+                        g = gcd(up, down)
+                        up //= g
+                        down //= g
+                        w_res = scipy_signal.resample_poly(w_np, up, down, axis=-1)
+                        w = torch.from_numpy(w_res).to(dtype=w.dtype)
+                        print("Resampled shape:", w.shape)
 
-                    torchaudio.save(str(temp_path), w, model_sample_rate)
+                    print("Final waveform shape before save:", w.shape)
+                    try:
+                        # Ensure proper shape and format for WAV save using scipy
+                        if not isinstance(w, torch.Tensor):
+                            w = torch.tensor(w)
+                        w = w.cpu().float()  # Ensure CPU tensor and float dtype
+
+                        if w.ndim == 1:
+                            w = w.unsqueeze(0)  # Add channels dimension
+                        elif w.ndim == 3:
+                            w = w.squeeze(0)  # Remove batch dimension
+
+                        # Ensure we have (channels, samples)
+                        if w.ndim != 2:
+                            w = w.reshape(1, -1)
+
+                        # Save as WAV file using scipy (shape -> (samples, channels))
+                        temp_path = temp_path.with_suffix('.wav')
+                        print(f"Saving audio to {temp_path}, shape={w.shape}, dtype={w.dtype}")
+                        out_np = w.numpy().T  # (samples, channels)
+                        # Convert to 16-bit PCM
+                        out_np = _np.clip(out_np, -1.0, 1.0)
+                        out_int16 = (_np.round(out_np * 32767.0)).astype(_np.int16)
+                        scipy_wavfile.write(str(temp_path), model_sample_rate, out_int16)
+
+                    except Exception as e:
+                        print(f"Error saving temporary audio file: {e}")
+                        raise
                     print(f"Temporary voice file saved to: {temp_path}")
+                    print("debug8.1")
 
                 out_wavs = []
                 for seg in segments:
@@ -217,35 +267,58 @@ class VoiceCloneNode:
 
                     # Normalize returned waveform to a torch tensor with shape (channels, time)
                     if isinstance(wav_seg, torch.Tensor):
+                        print("debug9")
                         seg_w = wav_seg
                     else:
+                        print("debug10")
                         seg_w = torch.tensor(wav_seg)
+                        print("debug10.1")
 
                     # Handle possible shapes:
                     # - (batch, channels, time) -> take first batch
                     # - (channels, time) -> ok
                     # - (time,) -> convert to (1, time)
                     # - (batch, time) or other -> try to reshape to (1, time)
+                    print("debug11")
                     if seg_w.ndim == 3:
                         seg_w = seg_w[0]
                     elif seg_w.ndim == 1:
                         seg_w = seg_w.unsqueeze(0)
+                        print("debug11.1")
                     elif seg_w.ndim == 2:
                         # assume (channels, time) or (batch, time); if batch-like, keep as-is
                         pass
                     else:
                         seg_w = seg_w.reshape(1, -1)
+                        print("debug11.2")
 
                     out_wavs.append(seg_w)
+                    print("debug12")
 
+                print("debug13")
                 if len(out_wavs) == 0:
                     final_wav = torch.zeros(1, 0)
+                    print("debug13.1: Created empty waveform")
                 else:
                     # concatenate along time axis (dim=1) expecting (channels, time)
                     final_wav = torch.cat(out_wavs, dim=1)
+                    print(f"debug13.2: Concatenated waveform shape: {final_wav.shape}")
 
-            # Return with a leading batch dimension (1, channels, time)
-            return ({"waveform": final_wav.unsqueeze(0), "sample_rate": model_sample_rate},)
+                # final_wav is expected by ComfyUI to have a leading batch dimension
+                # i.e. shape (batch, channels, samples). We'll return batch dimension = 1.
+                if final_wav.ndim == 3:
+                    out_wav = final_wav
+                elif final_wav.ndim == 2:
+                    out_wav = final_wav.unsqueeze(0)  # (1, channels, samples)
+                elif final_wav.ndim == 1:
+                    out_wav = final_wav.unsqueeze(0).unsqueeze(0)  # (1, 1, samples)
+                else:
+                    out_wav = final_wav.reshape(1, 1, -1)
+
+                out_wav = out_wav.detach().cpu()
+                print(f"Final returned waveform shape (with batch): {out_wav.shape}, dtype: {out_wav.dtype}")
+
+                return ({"waveform": out_wav, "sample_rate": model_sample_rate},)
         except Exception as e:
             print(f"[VoiceCloneNode] Generation error: {e}")
             return ({"waveform": torch.zeros(1), "sample_rate": model_sample_rate},)
@@ -278,32 +351,33 @@ class VoiceReplaceNode:
 
     def generate(
         self,
-        audio,       
+        audio,
         target_voice,
         disable_watermark=False,
     ):
         # lazy-load model once per node instance
         if getattr(self, "model", None) is None:
-            self.model = ChatterboxVC.from_local(str(self.model_path), device=device)
+            self.model = ChatterboxVC.from_local(
+                str(self.model_path), device=device)
 
         model = self.model
         model_sample_rate = 24000
         if disable_watermark:
             model.watermarker = NullWatermarker()
-       
+
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                audio_path = Path(tmpdir) / "audio.wav"    
-                target_voice_path = Path(tmpdir) / "target_voice.wav"    
-      
+                audio_path = Path(tmpdir) / "audio.wav"
+                target_voice_path = Path(tmpdir) / "target_voice.wav"
+
                 audio_waveform = audio["waveform"]
                 target_voice_waveform = target_voice["waveform"]
-                
+
                 if isinstance(audio_waveform, torch.Tensor):
                     aw = audio_waveform
                 else:
                     aw = torch.tensor(audio_waveform)
-                    
+
                 if isinstance(target_voice_waveform, torch.Tensor):
                     taw = target_voice_waveform
                 else:
@@ -314,32 +388,65 @@ class VoiceReplaceNode:
                     aw = aw.squeeze(0)
                 if aw.ndim == 1:
                     aw = aw.unsqueeze(0)
-                
+
                 if taw.ndim == 3:
                     taw = taw.squeeze(0)
                 if taw.ndim == 1:
                     taw = taw.unsqueeze(0)
 
                 if audio["sample_rate"] != model_sample_rate:
-                    aw = torchaudio.functional.resample(
-                        aw, audio["sample_rate"], model_sample_rate
-                    )
-                
-                if target_voice["sample_rate"] != model_sample_rate:
-                    taw = torchaudio.functional.resample(
-                        taw, audio["sample_rate"], model_sample_rate
-                    )
+                    src_sr_aw = int(audio["sample_rate"])
+                    tgt_sr = int(model_sample_rate)
+                    aw_np = aw.cpu().numpy()
+                    up_aw = tgt_sr
+                    down_aw = src_sr_aw
+                    g_aw = gcd(up_aw, down_aw)
+                    up_aw //= g_aw
+                    down_aw //= g_aw
+                    aw_res = scipy_signal.resample_poly(aw_np, up_aw, down_aw, axis=-1)
+                    aw = torch.from_numpy(aw_res).to(dtype=aw.dtype)
 
-                torchaudio.save(str(audio_path), aw, model_sample_rate)
-                print(f"Temporary audio file saved to: {audio_path}")
-                
-                torchaudio.save(str(target_voice_path), taw, model_sample_rate)
-                print(f"Temporary target voice file saved to: {target_voice_path}")           
-                  
+                if target_voice["sample_rate"] != model_sample_rate:
+                    src_sr_taw = int(target_voice["sample_rate"])
+                    tgt_sr = int(model_sample_rate)
+                    taw_np = taw.cpu().numpy()
+                    up_taw = tgt_sr
+                    down_taw = src_sr_taw
+                    g_taw = gcd(up_taw, down_taw)
+                    up_taw //= g_taw
+                    down_taw //= g_taw
+                    taw_res = scipy_signal.resample_poly(taw_np, up_taw, down_taw, axis=-1)
+                    taw = torch.from_numpy(taw_res).to(dtype=taw.dtype)
+
+                # Save temp files using scipy
+                try:
+                    aw_out = aw.cpu().float()
+                    if aw_out.ndim == 1:
+                        aw_out = aw_out.unsqueeze(0)
+                    aw_np_out = aw_out.numpy().T
+                    aw_np_out = _np.clip(aw_np_out, -1.0, 1.0)
+                    aw_int16 = (_np.round(aw_np_out * 32767.0)).astype(_np.int16)
+                    scipy_wavfile.write(str(audio_path), model_sample_rate, aw_int16)
+                    print(f"Temporary audio file saved to: {audio_path}")
+                except Exception as _e:
+                    print(f"Failed to save audio_path with scipy: {_e}")
+
+                try:
+                    taw_out = taw.cpu().float()
+                    if taw_out.ndim == 1:
+                        taw_out = taw_out.unsqueeze(0)
+                    taw_np_out = taw_out.numpy().T
+                    taw_np_out = _np.clip(taw_np_out, -1.0, 1.0)
+                    taw_int16 = (_np.round(taw_np_out * 32767.0)).astype(_np.int16)
+                    scipy_wavfile.write(str(target_voice_path), model_sample_rate, taw_int16)
+                    print(f"Temporary target voice file saved to: {target_voice_path}")
+                except Exception as _e:
+                    print(f"Failed to save target_voice_path with scipy: {_e}")
+
                 out_wav = model.generate(
                     audio=str(audio_path),
                     target_voice_path=str(target_voice_path),
-                )               
+                )
 
             return ({"waveform": out_wav.unsqueeze(0), "sample_rate": model_sample_rate},)
         except Exception as e:
