@@ -15,10 +15,10 @@ Or, install using your command/terminal prompt.
    ```bash
    git clone https://github.com/Sean-Bradley/ComfyUI-Voice-Clone.git
    ```
-3. Navigate to your `ComfyUI_windows_portable/python_embeded` folder.
+3. Navigate to your `ComfyUI_windows_portable` folder.
 4. Run,
    ```bash
-   python -m pip install -r ../ComfyUI/custom_nodes/ComfyUI-Voice-Clone/requirements.txt
+   python_embeded\python -m pip install -r ComfyUI/custom_nodes/comfyui-voice-clone/requirements.txt
    ```
 5. Restart ComfyUI
 
