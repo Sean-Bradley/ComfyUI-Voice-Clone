@@ -1,9 +1,9 @@
 [project]
 name = "comfyui-voice-clone"
 description = "Custom TTS node that clones voice from a reference audio and speaks entered text."
-version = "2.0.2"
+version = "2.1.0"
 license = "Apache License, Version 2.0"
-dependencies = ["librosa>=0.11.0", "conformer>=0.1.0", "perth>=1.0.0", "resemble-perth>=1.0.1", "resampy>=0.4.3", "s3tokenizer>=0.2.0", "scipy>=1.10.0"]
+dependencies = ["librosa>=0.11.0", "conformer>=0.1.0", "perth>=1.0.0", "resemble-perth>=1.0.1", "resampy>=0.4.3", "s3tokenizer>=0.2.0", "scipy>=1.10.0", "diffusers>=0.29.0"]
 
 [project.urls]
 Repository = "https://github.com/Sean-Bradley/ComfyUI-Voice-Clone"
