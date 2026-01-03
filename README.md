@@ -29,19 +29,35 @@ All required models can be downloaded from [https://huggingface.co/ResembleAI/ch
 Ensure that your folder structure and downloaded files resemble this below.
 
 ```text
---  ComfyUI/models/tts/chatterbox/
-    |-- conds.pt
-    |-- s3gen.safetensors
-    |-- t3_cfg.safetensors
-    |-- tokenizer.json
-    |-- ve.safetensors
+📂 ComfyUI/
+├── 📂 models/
+│   ├── 📂 tts/
+│   │   └── 📂 chatterbox/
+|   |       ├── added_tokens.json
+|   |       ├── conds.pt
+|   |       ├── merges.txt
+|   |       ├── s3gen.safetensors
+|   |       ├── s3gen_meanflow.safetensors
+|   |       ├── special_tokens_map.json
+|   |       ├── t3_turbo_v1.safetensors
+|   |       ├── tokenizer_config.json
+|   |       ├── ve.safetensors
+|   |       └── vocab.json
 ```
 
-## Sample Workflows
+## Example Workflow Layouts
 
-![So_Much_for_So_Little](./docs/voice-clone-1.jpg)
+### Voice Clone
 
-![Puss_n%27_Booty](./docs/voice-clone-2.png)
+Download <a href="../docs/example-voice-clone.mp3" download style="white-space: nowrap">Example Voice Clone</a> and drag into ComyfUI to see the workflow.
+
+![Voice Clone](./docs/{3F7B0115-3EDD-4639-B97B-E394E89F96E7}.png)
+
+### Voice Replace
+
+Download <a href="../docs/example-voice-replace.mp3" download style="white-space: nowrap">Example Voice Replace</a> and drag into ComyfUI to see the workflow.
+
+![Voice Replace](./docs/{C0682B60-9C29-43F5-85F0-9A5A7502A65B}.png)
 
 ## Sample Audios
 
@@ -57,16 +73,38 @@ Ensure that your folder structure and downloaded files resemble this below.
 
 ## Settings
 
-| Setting                    | Description                                                                                                                                                                                                                                                                                       |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| exaggeration               | Controls the expressiveness / prosody of the generated voice. Higher values make the speech more emphatic and varied; lower values produce a flatter, more neutral delivery. Valid range: 0.25 - 2.0.                                                                                             |
-| temperature                | Sampling temperature for the text-to-speech decoder. Higher values increase randomness and variety in the generated audio; lower values make outputs more conservative and deterministic. Valid range: 0.15 - 2.0.                                                                                |
-| cfg_weight                 | Classifier-free guidance (CFG) weight that balances adherence to the text conditioning vs. model priors. Larger values force the model to follow the conditioning (text/prompt) more strongly, which can improve faithfulness but may increase artifacts if set too high. Valid range: 0.05 - 1.0 |
-| min_p                      | A lower-probability cutoff used during sampling to filter extremely unlikely tokens or frames. Helps avoid very low-probability outputs that could degrade quality. Valid range: 0.0 - 1.0                                                                                                        |
-| top_p                      | Nucleus (top-p) sampling cumulative probability threshold. The decoder samples from the smallest set of tokens whose cumulative probability ≥ top_p. top_p = 1.0 disables nucleus filtering (i.e., sample from full distribution). Valid range: 0.0 - 1.0                                         |
-| repetition_penalty         | Penalizes repetition during generation. Values > 1.0 discourage repeating the same tokens/frames, reducing looping/redundancy in speech. Valid range: 1.0 - 2.0                                                                                                                                   |
-| voice_embedding (optional) | If provided, an audio reference is used as an audio prompt for voice cloning.                                                                                                                                                                                                                     |
+| Setting                    | Description                                                                                                                                                                                                                                               |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| temperature                | Sampling temperature for the text-to-speech decoder. Higher values increase randomness and variety in the generated audio; lower values make outputs more conservative and deterministic. Valid range: 0.15 - 2.0.                                        |
+| top_p                      | Nucleus (top-p) sampling cumulative probability threshold. The decoder samples from the smallest set of tokens whose cumulative probability ≥ top_p. top_p = 1.0 disables nucleus filtering (i.e., sample from full distribution). Valid range: 0.0 - 1.0 |
+| repetition_penalty         | Penalizes repetition during generation. Values > 1.0 discourage repeating the same tokens/frames, reducing looping/redundancy in speech. Valid range: 1.0 - 2.0                                                                                           |
+| voice_embedding (optional) | If provided, an audio reference is used as an audio prompt for voice cloning.                                                                                                                                                                             |
+| top_k                      | At each step of generation, the model predicts probabilities for many possible next tokens (text or acoustic tokens). The next token is sampled only from those top k candidates.                                                                         |
+| normalize                  | Normalize the audio output volume.                                                                                                                                                                                                                        |
+| disable_watermark          | By default, audio output is watermarked using PerTh Watermarking. You can disable this by selecting `true`.                                                                                                                                               |
 
 ## About
 
 This custom node uses [resemble-ai/chatterbox](https://github.com/resemble-ai/chatterbox) under the hood.
+
+<!--
+[angry]         ? none of these question marks seem to work
+[fear]          ?
+[surprised]     ?
+[whispering]    ?
+[advertisement] ?
+[dramatic]      ? causes very slow generation
+[narration]     ? causes very slow generation
+[crying]        ?
+[happy]         ? i think so
+[sarcastic]     ?
+[clear throat]  yes
+[sigh]          yes causes very slow generation
+[shush]         yes
+[cough]         yes
+[groan]         yes
+[sniff]         yes
+[gasp]          yes
+[chuckle]       yes
+[laugh]         yes
+-->
