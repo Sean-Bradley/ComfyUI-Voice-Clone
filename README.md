@@ -49,15 +49,15 @@ Ensure that your folder structure and downloaded files resemble this below.
 
 ### Voice Clone
 
-Download <a href="../docs/example-voice-clone.mp3" download style="white-space: nowrap">Example Voice Clone</a> and drag into ComyfUI to see the workflow.
+Download <a href="docs/example-voice-clone.mp3" download style="white-space: nowrap">Example Voice Clone</a> and drag into ComyfUI to see the workflow.
 
-![Voice Clone](./docs/{3F7B0115-3EDD-4639-B97B-E394E89F96E7}.png)
+![Voice Clone](docs/{3F7B0115-3EDD-4639-B97B-E394E89F96E7}.png)
 
 ### Voice Replace
 
-Download <a href="../docs/example-voice-replace.mp3" download style="white-space: nowrap">Example Voice Replace</a> and drag into ComyfUI to see the workflow.
+Download <a href="docs/example-voice-replace.mp3" download style="white-space: nowrap">Example Voice Replace</a> and drag into ComyfUI to see the workflow.
 
-![Voice Replace](./docs/{C0682B60-9C29-43F5-85F0-9A5A7502A65B}.png)
+![Voice Replace](docs/{C0682B60-9C29-43F5-85F0-9A5A7502A65B}.png)
 
 ## Sample Audios
 
