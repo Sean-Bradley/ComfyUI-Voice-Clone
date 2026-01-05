@@ -1,9 +1,9 @@
 [project]
 name = "comfyui-voice-clone"
 description = "Custom TTS node that clones voice from a reference audio and speaks entered text. Based on Chatterbox Turbo."
-version = "3.0.0"
+version = "3.1.0"
 license = "Apache License, Version 2.0"
-dependencies = ["librosa>=0.11.0", "conformer>=0.1.0", "perth>=1.0.0", "resemble-perth>=1.0.1", "resampy>=0.4.3", "s3tokenizer>=0.2.0", "scipy>=1.10.0", "diffusers>=0.29.0", "pyloudnorm>=0.1.1"]
+dependencies = ["librosa>=0.11.0", "conformer>=0.1.0", "perth>=1.0.0", "resemble-perth>=1.0.1", "resampy>=0.4.3", "s3tokenizer>=0.2.0", "scipy>=1.10.0", "diffusers>=0.29.0", "pyloudnorm>=0.1.1", "omegaconf>=2.3.0"]
 
 [project.urls]
 Repository = "https://github.com/Sean-Bradley/ComfyUI-Voice-Clone"

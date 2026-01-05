@@ -7,4 +7,4 @@ scipy>=1.10.0
 s3tokenizer>=0.2.0
 diffusers>=0.29.0
 pyloudnorm>=0.1.1
-
+omegaconf>=2.3.0
