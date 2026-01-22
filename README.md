@@ -24,7 +24,7 @@ Or, install using your command/terminal prompt.
 
 ## Install Models
 
-All required models can be downloaded from [https://huggingface.co/ResembleAI/chatterbox/tree/main](https://huggingface.co/ResembleAI/chatterbox/tree/main)
+All required models can be downloaded from [https://huggingface.co/Sean-Bradley/ComfyUI/tree/main/models/tts/chatterbox](https://huggingface.co/Sean-Bradley/ComfyUI/tree/main/models/tts/chatterbox)
 
 Ensure that your folder structure and downloaded files resemble this below.
 
@@ -108,3 +108,4 @@ This custom node uses [resemble-ai/chatterbox](https://github.com/resemble-ai/ch
 [chuckle]       yes
 [laugh]         yes
 -->
+
