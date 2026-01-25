@@ -3,15 +3,11 @@ import torch
 import tempfile
 import numpy as _np
 import scipy.io.wavfile as scipy_wavfile
-import scipy.signal as scipy_signal
 from math import gcd
 from pathlib import Path
-import re
 from .chatterbox.tts import ChatterboxTTS
-from .chatterbox.tts_turbo import ChatterboxTurboTTS
 from .chatterbox.vc import ChatterboxVC
 import perth
-import librosa
 
 
 # Automatically detect the best available device
@@ -22,7 +18,7 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-DEFAULT_TEXT = "1 2,\nHello, and welcome to my course teaching how to generate images and video using Comfy U-I. This is amazing stuff, so lets get started."
+DEFAULT_TEXT = "Hello, and welcome to my course teaching how to generate images, video and audio using Comfy U-I. This is amazing stuff, so lets get started."
 
 
 class NullWatermarker:
@@ -53,30 +49,30 @@ class VoiceCloneNode:
                     "display": "number",
                     "control_after_generate": "increment"
                 }),
-                # "exaggeration": ("FLOAT", {
-                #     "default": 0.4,
-                #     "min": 0.25,
-                #     "max": 2.0,
-                #     "step": 0.05
-                # }),
+                "exaggeration": ("FLOAT", {
+                    "default": 0.4,
+                    "min": 0.25,
+                    "max": 2.0,
+                    "step": 0.05
+                }),
                 "temperature": ("FLOAT", {
                     "default": 0.8,
                     "min": 0.15,
                     "max": 2.0,
                     "step": 0.05
                 }),
-                # "cfg_weight": ("FLOAT", {
-                #     "default": 0.7,
-                #     "min": 0.05,
-                #     "max": 1.0,
-                #     "step": 0.05
-                # }),
-                # "min_p": ("FLOAT", {
-                #     "default": 0.00,
-                #     "min": 0.0,
-                #     "max": 1.0,
-                #     "step": 0.01
-                # }),
+                "cfg_weight": ("FLOAT", {
+                    "default": 0.7,
+                    "min": 0.05,
+                    "max": 1.0,
+                    "step": 0.05
+                }),
+                "min_p": ("FLOAT", {
+                    "default": 0.05,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "step": 0.01
+                }),
                 "top_p": ("FLOAT", {
                     "default": .95,
                     "min": 0.0,
@@ -88,15 +84,6 @@ class VoiceCloneNode:
                     "min": 1.0,
                     "max": 2.0,
                     "step": 0.1
-                }),
-                "top_k": ("FLOAT", {
-                    "default": 1000,
-                    "min": 0,
-                    "max": 1000,
-                    "step": 10
-                }),
-                "normalize": ("BOOLEAN", {
-                    "default": False
                 }),
                 "disable_watermark": ("BOOLEAN", {
                     "default": False
@@ -115,11 +102,12 @@ class VoiceCloneNode:
         self,
         text,
         seed,
+        exaggeration,
         temperature,
+        cfg_weight,
+        min_p,
         top_p,
         repetition_penalty,
-        top_k,
-        normalize,
         disable_watermark,
         voice_embedding=None,
     ):
@@ -130,7 +118,7 @@ class VoiceCloneNode:
         random.seed(seed)
         _np.random.seed(seed)
 
-        self.clone_model = ChatterboxTurboTTS.from_local(
+        self.clone_model = ChatterboxTTS.from_local(
             str(self.model_path), device=device)
 
         if disable_watermark:
@@ -148,11 +136,12 @@ class VoiceCloneNode:
 
                     wav = self.clone_model.generate(text,
                                                     audio_prompt_path=temp_path,
+                                                    exaggeration=exaggeration,
                                                     temperature=temperature,
+                                                    cfg_weight=cfg_weight,
+                                                    min_p=min_p,
                                                     top_p=top_p,
-                                                    top_k=int(top_k),
                                                     repetition_penalty=repetition_penalty,
-                                                    norm_loudness=normalize,
                                                     )
             except Exception as e:
                 print(
@@ -161,11 +150,12 @@ class VoiceCloneNode:
 
         else:
             wav = self.clone_model.generate(text,
+                                            exaggeration=exaggeration,
                                             temperature=temperature,
+                                            cfg_weight=cfg_weight,
+                                            min_p=min_p,
                                             top_p=top_p,
-                                            top_k=int(top_k),
                                             repetition_penalty=repetition_penalty,
-                                            norm_loudness=True,
                                             )
 
         return ({"waveform": wav.unsqueeze(0), "sample_rate": self.clone_model.sr},)
